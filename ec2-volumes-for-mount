@@ -1,0 +1,91 @@
+#!/bin/bash
+#set -x
+set -o pipefail
+
+export EC2_HOME=/opt/aws/apitools/ec2
+export JAVA_HOME=/usr/lib/jvm/jre
+export PATH=$EC2_HOME/bin:$PATH
+
+eval `./ec2-instance-env`
+
+if [ $# = 0 ]; then
+  echo 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]' 1>&2
+  exit 1
+fi
+
+real_device() {
+  local DEVICE="$1"
+  test -L $DEVICE && DEVICE=`readlink -f $DEVICE`
+  if [ ! -b $DEVICE ]; then
+    echo "Not a device: $DEVICE" 1>&2
+    exit 1
+  fi
+  echo $DEVICE
+}
+
+raid_components() {
+  local DEVICE="$1"
+  if [ ! -b $DEVICE ]; then
+    echo "Not a device: $DEVICE" 1>&2
+    exit 1
+  fi
+  mdadm --detail $DEVICE | awk 'NR > 1 && $NF ~ /^\/dev\// { print $NF }'
+}
+
+lvm_components() {
+  local DEVICE="$1"
+  if [ ! -b $DEVICE ]; then
+    echo "Not a device: $DEVICE" 1>&2
+    exit 1
+  fi
+  local DM_DEVICE=/dev/mapper/`dmsetup info --columns --noheading $DEVICE | cut -d: -f1`
+  lvs -o devices --noheadings $DM_DEVICE  | sed -e 's/^[[:space:]]\+//; s/([0-9]\+)$//'
+}
+
+declare -a DEVICES=()
+for MOUNT in "$@"; do
+  DEVICE=`awk -v mount=$MOUNT '$1 ~ /^\/dev\// && $2 == mount { print $1 }' /etc/mtab`
+  if [ -z $DEVICE ]; then
+    echo "The path '$MOUNT' is not a mount point" 1>&2
+    exit 1
+  fi
+  DEVICE=`real_device $DEVICE`
+  read DEVICE_MAJOR DEVICE_MINOR < <(stat -c '0x%t 0x%T' $DEVICE | xargs printf '%d %d\n')
+  case $DEVICE_MAJOR in
+    9) # RAID
+      RAID_DEVICES=`raid_components $DEVICE`
+      if [ $? != 0 ]; then
+        exit 1
+      fi
+      for DEVICE in $RAID_DEVICES; do
+        DEVICE=`real_device $DEVICE`
+        DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
+      done
+      ;;
+    202) # Xen Virtual Block Device
+      DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
+      ;;
+    253) # LVM
+      LVM_DEVICES=`lvm_components $DEVICE`
+      if [ $? != 0 ]; then
+        exit 1
+      fi
+      for DEVICE in $LVM_DEVICES; do
+        DEVICE=`real_device $DEVICE`
+        DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
+      done
+      ;;
+    *)
+      echo "Unknown device type $DEVICE_MAJOR:$DEVICE_MINOR for $DEVICE at $MOUNT"
+      exit 1
+      ;;
+  esac
+done
+
+ec2-describe-volumes \
+  --region "$AWS_REGION" \
+  --filter "attachment.instance-id=$AWS_INSTANCE_ID" \
+  --filter "attachment.status=attached" | \
+awk '$1 == "ATTACHMENT" { print $4 ":" $2 }' | sort -t: -k1,1 | \
+join -j1 -a1 -t: <(printf -- '%s\n' "${DEVICES[@]}" | sort -t: -k1,1) - | \
+cut -d: -f2,3

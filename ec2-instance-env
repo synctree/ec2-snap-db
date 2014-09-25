@@ -1,0 +1,14 @@
+#!/bin/sh
+AWS_INSTANCE_ID=`curl -m5 -s http://169.254.169.254/latest/meta-data/instance-id`
+AWS_AVAILABILITY_ZONE=`curl -m5 -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+AWS_REGION=`echo $AWS_AVAILABILITY_ZONE | sed -e 's/-\([0-9]\+\)[a-z]\?/-\1/'`
+
+if [ "$1" = "export" ]; then
+  export AWS_INSTANCE_ID AWS_AVAILABILITY_ZONE AWS_REGION
+else
+  cat <<EOF
+AWS_INSTANCE_ID=$AWS_INSTANCE_ID
+AWS_AVAILABILITY_ZONE=$AWS_AVAILABILITY_ZONE
+AWS_REGION=$AWS_REGION
+EOF
+fi

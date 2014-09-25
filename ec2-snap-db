@@ -1,0 +1,26 @@
+#!/bin/bash
+#set -x
+
+if [ -z "$AWS_ACCESS_KEY" ]; then
+  echo "Missing AWS_ACCESS_KEY" 1>&2
+  exit 1
+fi
+
+if [ -z "$AWS_SECRET_KEY" ]; then
+  echo "Missing AWS_SECRET_KEY" 1>&2
+  exit 1
+fi
+
+eval `./ec2-instance-env`
+
+FREEZE_FS="/disk2 /disk3 /mongo"
+
+VOLUME_MAP=$(./ec2-volumes-for-mount $FREEZE_FS)
+if [ $? != 0 ]; then
+  echo "Could not determine volumes for mounts: $FREEZE_FS" 1>&2
+  exit 1
+fi
+
+FREEZE=$(awk -F: '{ print "--freeze " $1 }' <<< "$VOLUME_MAP" | uniq)
+VOLUMES=$(awk -F: '{ print $2 }' <<< "$VOLUME_MAP")
+echo ec2-consistent-snapshot --noaction --region $AWS_REGION $FREEZE $VOLUMES
