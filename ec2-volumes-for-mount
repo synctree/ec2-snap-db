@@ -4,7 +4,7 @@ set -o pipefail
 
 eval `./ec2-instance-env`
 
-if [ $# = 0 ]; then
+if [ $# -eq 0 ]; then
   echo 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]' 1>&2
   exit 1
 fi
@@ -50,7 +50,7 @@ for MOUNT in "$@"; do
   case $DEVICE_MAJOR in
     9) # RAID
       RAID_DEVICES=`raid_components $DEVICE`
-      if [ $? != 0 ]; then
+      if [ $? -ne 0 ]; then
         exit 1
       fi
       for DEVICE in $RAID_DEVICES; do
@@ -63,7 +63,7 @@ for MOUNT in "$@"; do
       ;;
     252|253) # LVM
       LVM_DEVICES=`lvm_components $DEVICE`
-      if [ $? != 0 ]; then
+      if [ $? -ne 0 ]; then
         exit 1
       fi
       for DEVICE in $LVM_DEVICES; do
