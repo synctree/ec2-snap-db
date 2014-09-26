@@ -2,19 +2,19 @@
 #set -x
 set -o pipefail
 
-eval `./ec2-instance-env`
+die() { echo "$@" 1>&2; exit 1; }
 
 if [ $# -eq 0 ]; then
-  echo 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]' 1>&2
-  exit 1
+  die 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]'
 fi
+
+eval `./ec2-instance-env`
 
 real_device() {
   local DEVICE="$1"
   test -L $DEVICE && DEVICE=`readlink -f $DEVICE`
   if [ ! -b $DEVICE ]; then
-    echo "Not a device: $DEVICE" 1>&2
-    exit 1
+    die "Not a device: $DEVICE"
   fi
   echo $DEVICE
 }
@@ -22,8 +22,7 @@ real_device() {
 raid_components() {
   local DEVICE="$1"
   if [ ! -b $DEVICE ]; then
-    echo "Not a device: $DEVICE" 1>&2
-    exit 1
+    die "Not a device: $DEVICE"
   fi
   mdadm --detail $DEVICE | awk 'NR > 1 && $NF ~ /^\/dev\// { print $NF }'
 }
@@ -31,8 +30,7 @@ raid_components() {
 lvm_components() {
   local DEVICE="$1"
   if [ ! -b $DEVICE ]; then
-    echo "Not a device: $DEVICE" 1>&2
-    exit 1
+    die "Not a device: $DEVICE"
   fi
   local DM_DEVICE=/dev/mapper/`dmsetup info --columns --noheading $DEVICE | cut -d: -f1`
   lvs -o devices --noheadings $DM_DEVICE  | sed -e 's/^[[:space:]]\+//; s/([0-9]\+)$//'
@@ -42,8 +40,7 @@ declare -a DEVICES=()
 for MOUNT in "$@"; do
   DEVICE=`awk -v mount=$MOUNT '$1 ~ /^\/dev\// && $2 == mount { print $1 }' /etc/mtab`
   if [ -z $DEVICE ]; then
-    echo "The path '$MOUNT' is not a mount point" 1>&2
-    exit 1
+    die "The path '$MOUNT' is not a mount point"
   fi
   DEVICE=`real_device $DEVICE`
   read DEVICE_MAJOR DEVICE_MINOR < <(stat -c '0x%t 0x%T' $DEVICE | xargs printf '%d %d\n')
