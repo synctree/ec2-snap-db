@@ -8,6 +8,12 @@ if [ $# -eq 0 ]; then
   die 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]'
 fi
 
+# Re-exec under sudo if we aren't running as root
+if [ $EUID -ne 0 ]; then
+  echo "Not running as root; re-executing under sudo" 1>&2
+  exec sudo env AWS_ACCESS_KEY=$AWS_ACCESS_KEY AWS_SECRET_KEY=$AWS_SECRET_KEY "$0" "$@"
+fi
+
 eval `./ec2-instance-env`
 
 real_device() {
