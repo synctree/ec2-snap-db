@@ -2,10 +2,6 @@
 #set -x
 set -o pipefail
 
-export EC2_HOME=/opt/aws/apitools/ec2
-export JAVA_HOME=/usr/lib/jvm/jre
-export PATH=$EC2_HOME/bin:$PATH
-
 eval `./ec2-instance-env`
 
 if [ $# = 0 ]; then
@@ -65,7 +61,7 @@ for MOUNT in "$@"; do
     202) # Xen Virtual Block Device
       DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
       ;;
-    253) # LVM
+    252|253) # LVM
       LVM_DEVICES=`lvm_components $DEVICE`
       if [ $? != 0 ]; then
         exit 1
