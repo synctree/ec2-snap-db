@@ -84,4 +84,4 @@ ec2-describe-volumes \
   --filter "attachment.status=attached" | \
 awk '$1 == "ATTACHMENT" { print $4 ":" $2 }' | sort -t: -k1,1 | \
 join -j1 -a1 -t: <(printf -- '%s\n' "${DEVICES[@]}" | sort -t: -k1,1) - | \
-cut -d: -f2,3
+awk -F: -v OFS=: '{ print $2, $3, $1 }'
