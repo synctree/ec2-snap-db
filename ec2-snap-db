@@ -1,23 +1,25 @@
 #!/bin/bash
 #set -x
 
+die() { echo "$@" 1>&2; exit 1; }
+
 if [ -z "$AWS_ACCESS_KEY" ]; then
-  echo "Missing AWS_ACCESS_KEY" 1>&2
-  exit 1
+  die "Missing AWS_ACCESS_KEY"
 fi
 
 if [ -z "$AWS_SECRET_KEY" ]; then
-  echo "Missing AWS_SECRET_KEY" 1>&2
-  exit 1
+  die "Missing AWS_SECRET_KEY"
+fi
+
+if [ $# = 0 ]; then
+  die "Usage: $0 MOUNT [MOUNT...]"
 fi
 
 eval `./ec2-instance-env`
 
-FREEZE_FS="/disk2 /disk3 /mongo"
-
-VOLUME_MAP=$(./ec2-volumes-for-mount $FREEZE_FS)
+VOLUME_MAP=$(./ec2-volumes-for-mount "$@")
 if [ $? != 0 ]; then
-  echo "Could not determine volumes for mounts: $FREEZE_FS" 1>&2
+  echo "Could not determine volumes for mounts: $@" 1>&2
   exit 1
 fi
 
