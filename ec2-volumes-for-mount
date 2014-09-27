@@ -14,8 +14,6 @@ if [ $EUID -ne 0 ]; then
   exec sudo env AWS_ACCESS_KEY=$AWS_ACCESS_KEY AWS_SECRET_KEY=$AWS_SECRET_KEY "$0" "$@"
 fi
 
-eval `./ec2-instance-env`
-
 real_device() {
   local DEVICE="$1"
   test -L $DEVICE && DEVICE=`readlink -f $DEVICE`
@@ -80,6 +78,8 @@ for MOUNT in "$@"; do
       ;;
   esac
 done
+
+eval `./ec2-instance-env`
 
 ec2-describe-volumes \
   --region "$EC2_REGION" \
