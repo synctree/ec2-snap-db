@@ -1,14 +1,14 @@
 #!/bin/sh
-AWS_INSTANCE_ID=`curl -m5 -s http://169.254.169.254/latest/meta-data/instance-id`
-AWS_AVAILABILITY_ZONE=`curl -m5 -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
-AWS_REGION=`echo $AWS_AVAILABILITY_ZONE | sed -e 's/-\([0-9]\+\)[a-z]\?/-\1/'`
+EC2_INSTANCE_ID=`curl -m5 -s http://169.254.169.254/latest/meta-data/instance-id`
+EC2_AVAILABILITY_ZONE=`curl -m5 -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
+EC2_REGION=`echo $EC2_AVAILABILITY_ZONE | sed -e 's/-\([0-9]\+\)[a-z]\?/-\1/'`
 
 if [ "$1" = "--export" ]; then
-  export AWS_INSTANCE_ID AWS_AVAILABILITY_ZONE AWS_REGION
+  export EC2_INSTANCE_ID EC2_AVAILABILITY_ZONE EC2_REGION
 else
   cat <<EOF
-AWS_INSTANCE_ID=$AWS_INSTANCE_ID
-AWS_AVAILABILITY_ZONE=$AWS_AVAILABILITY_ZONE
-AWS_REGION=$AWS_REGION
+EC2_INSTANCE_ID=$EC2_INSTANCE_ID
+EC2_AVAILABILITY_ZONE=$EC2_AVAILABILITY_ZONE
+EC2_REGION=$EC2_REGION
 EOF
 fi

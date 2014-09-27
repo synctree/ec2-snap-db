@@ -25,4 +25,4 @@ fi
 
 FREEZE=$(awk -F: '{ print "--freeze " $1 }' <<< "$VOLUME_MAP" | uniq)
 VOLUMES=$(awk -F: '{ print $2 }' <<< "$VOLUME_MAP")
-echo ec2-consistent-snapshot --noaction --region $AWS_REGION $FREEZE $VOLUMES
+echo ec2-consistent-snapshot --noaction --region $EC2_REGION $FREEZE $VOLUMES
