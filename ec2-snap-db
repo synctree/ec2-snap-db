@@ -15,7 +15,7 @@ if [ $# -eq 0 ]; then
   die "Usage: $0 MOUNT [MOUNT...]"
 fi
 
-eval `./ec2-instance-env`
+eval $(./ec2-instance-env)
 
 VOLUME_MAP=$(./ec2-volumes-for-mount "$@")
 if [ $? -ne 0 ]; then
@@ -23,6 +23,11 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-FREEZE=$(awk -F: '{ print "--freeze " $1 }' <<< "$VOLUME_MAP" | uniq)
-VOLUMES=$(awk -F: '{ print $2 }' <<< "$VOLUME_MAP")
-echo ec2-consistent-snapshot --noaction --region $EC2_REGION $FREEZE $VOLUMES
+EC2_INSTANCE_NAME=$(ec2-describe-tags --region $EC2_REGION --filter "resource-id=$EC2_INSTANCE_ID" | cut -f5-)
+TS=$(date "+%Y%m%d%H%M%S")
+
+ARGS="--noaction"
+ARGS+=" --region $EC2_REGION"
+ARGS+=$(awk -F: '{ print " --freeze " $1 }' <<< "$VOLUME_MAP" | uniq)
+ARGS+=$(awk -v "NAME=${EC2_INSTANCE_NAME:-$EC2_INSTANCE_ID}" -v "TS=$TS" -F: '{ print " --description \"" NAME $1 "/" TS "\" " $2 }' <<< "$VOLUME_MAP")
+echo ec2-consistent-snapshot $ARGS
