@@ -8,11 +8,8 @@ if [ $# -eq 0 ]; then
   die 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]'
 fi
 
-# Re-exec under sudo if we aren't running as root
-if [ $EUID -ne 0 ]; then
-  echo "Not running as root; re-executing under sudo" 1>&2
-  exec sudo env AWS_ACCESS_KEY=$AWS_ACCESS_KEY AWS_SECRET_KEY=$AWS_SECRET_KEY "$0" "$@"
-fi
+# Some commands will be run under sudo if we aren't running as root
+SUDO=$([ $EUID -ne 0 ] && echo sudo)
 
 real_device() {
   local DEVICE="$1"
@@ -28,7 +25,7 @@ raid_components() {
   if [ ! -b $DEVICE ]; then
     die "Not a device: $DEVICE"
   fi
-  mdadm --detail $DEVICE | awk 'NR > 1 && $NF ~ /^\/dev\// { print $NF }'
+  $SUDO mdadm --detail $DEVICE | awk 'NR > 1 && $NF ~ /^\/dev\// { print $NF }'
 }
 
 lvm_components() {
@@ -37,7 +34,7 @@ lvm_components() {
     die "Not a device: $DEVICE"
   fi
   local DM_DEVICE=/dev/mapper/`dmsetup info --columns --noheading $DEVICE | cut -d: -f1`
-  lvs -o devices --noheadings $DM_DEVICE  | sed -e 's/^[[:space:]]\+//; s/([0-9]\+)$//'
+  $SUDO lvs -o devices --noheadings $DM_DEVICE  | sed -e 's/^[[:space:]]\+//; s/([0-9]\+)$//'
 }
 
 declare -a DEVICES=()
