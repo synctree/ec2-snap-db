@@ -1,6 +1,10 @@
 #!/bin/sh
-EC2_INSTANCE_ID=${EC2_INSTANCE_ID:-`curl -m5 -s http://169.254.169.254/latest/meta-data/instance-id`}
-EC2_AVAILABILITY_ZONE=${EC2_AVAILABILITY_ZONE:-`curl -m5 -s http://169.254.169.254/latest/meta-data/placement/availability-zone`}
+ec2_meta_data() {
+  curl -m5 -s "http://169.254.169.254/latest/meta-data/$1"
+}
+
+EC2_INSTANCE_ID=${EC2_INSTANCE_ID:-`ec2_meta_data instance-id`}
+EC2_AVAILABILITY_ZONE=${EC2_AVAILABILITY_ZONE:-`ec2_meta_data placement/availability-zone`}
 EC2_REGION=${EC2_REGION:-`echo $EC2_AVAILABILITY_ZONE | sed -e 's/-\([0-9]\+\)[a-z]\?/-\1/'`}
 
 if [ "$1" = "--export" ]; then
