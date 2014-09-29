@@ -2,6 +2,8 @@
 #set -x
 set -o pipefail
 
+DIR=`dirname $(readlink -f "$0")`
+
 die() { echo "$@" 1>&2; exit 1; }
 
 if [ $# -eq 0 ]; then
@@ -76,7 +78,7 @@ for MOUNT in "$@"; do
   esac
 done
 
-eval `./ec2-instance-env`
+. $DIR/ec2-instance-env --export
 
 join -j1 -a1 -t: \
   <(printf -- '%s\n' "${DEVICES[@]}" | sort -t: -k1,1) \
