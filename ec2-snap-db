@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -x
 
+DIR=$(dirname $(readlink -f "$0"))
+
 die() { echo "$@" 1>&2; exit 1; }
 
 if [ -z "$AWS_ACCESS_KEY" ]; then
@@ -15,9 +17,9 @@ if [ $# -eq 0 ]; then
   die "Usage: $0 MOUNT [MOUNT...]"
 fi
 
-eval $(./ec2-instance-env)
+. $DIR/ec2-instance-env --export
 
-VOLUME_MAP=$(./ec2-volumes-for-mount "$@")
+VOLUME_MAP=$($DIR/ec2-volumes-for-mount "$@")
 if [ $? -ne 0 ]; then
   echo "Could not determine volumes for mounts: $@" 1>&2
   exit 1
