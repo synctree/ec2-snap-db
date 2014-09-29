@@ -33,7 +33,7 @@ lvm_components() {
   if [ ! -b $DEVICE ]; then
     die "Not a device: $DEVICE"
   fi
-  local DM_DEVICE=/dev/mapper/`dmsetup info --columns --noheading $DEVICE | cut -d: -f1`
+  local DM_DEVICE=/dev/mapper/`$SUDO dmsetup info --columns --noheading $DEVICE | cut -d: -f1`
   $SUDO lvs -o devices --noheadings $DM_DEVICE  | sed -e 's/^[[:space:]]\+//; s/([0-9]\+)$//'
 }
 
