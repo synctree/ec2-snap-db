@@ -10,6 +10,14 @@ if [ $# -eq 0 ]; then
   die 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]'
 fi
 
+if [ -z "$AWS_ACCESS_KEY" ]; then
+  die 'Missing AWS_ACCESS_KEY'
+fi
+
+if [ -z "$AWS_SECRET_KEY" ]; then
+  die 'Missing AWS_SECRET_KEY'
+fi
+
 # Some commands will be run under sudo if we aren't running as root
 SUDO=$([ $EUID -ne 0 ] && echo sudo)
 
