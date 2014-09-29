@@ -2,6 +2,7 @@
 #set -x
 
 DIR=$(dirname $(readlink -f "$0"))
+SUDO=$([ $EUID -ne 0 ] && echo sudo)
 
 die() { echo "$@" 1>&2; exit 1; }
 
@@ -54,4 +55,4 @@ ARGS+=$(awk -v "NAME=${EC2_INSTANCE_NAME:-$EC2_INSTANCE_ID}" \
             -v "TS=$TS" -F: \
             '{ MOUNT = $1 == "/" ? "/[root]" : $1; print " --description \"" NAME MOUNT "/" TS "\" " $2 }' \
             <<< "$VOLUME_MAP")
-echo ec2-consistent-snapshot $ARGS
+echo $SUDO ec2-consistent-snapshot $ARGS
