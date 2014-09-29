@@ -10,13 +10,32 @@ if [ $# -eq 0 ]; then
   die 'Usage: ec2-volumes-for-mount MOUNT [MOUNT...]'
 fi
 
-if [ -z "$AWS_ACCESS_KEY" ]; then
-  die 'Missing AWS_ACCESS_KEY'
-fi
+check_aws_key() {
+  local FOUND_KEY= FOUND_VALUE=
+  for KEY in "$@"; do
+    if [ -z $FOUND_KEY ]; then
+      if [ -n "${!KEY}" ]; then
+        FOUND_KEY=$KEY
+        FOUND_VALUE="${!KEY}"
+      fi
+    fi
+    if [ -n "${!KEY}" -a "${!KEY}" != "$FOUND_VALUE" ]; then
+      die "Both $FOUND_KEY and $KEY are set, but they have different values"
+    fi
+  done
+  if [ -n "$FOUND_KEY" ]; then
+    for KEY in "$@"; do
+      if [ -z "${!KEY}" ]; then
+        declare -g -x "$KEY=$FOUND_VALUE"
+      fi
+    done
+  else
+    die "Missing key: $@"
+  fi
+}
 
-if [ -z "$AWS_SECRET_KEY" ]; then
-  die 'Missing AWS_SECRET_KEY'
-fi
+check_aws_key AWS_ACCESS_KEY_ID AWS_ACCESS_KEY
+check_aws_key AWS_SECRET_ACCESS_KEY AWS_SECRET_KEY
 
 # Some commands will be run under sudo if we aren't running as root
 SUDO=$([ $EUID -ne 0 ] && echo sudo)
