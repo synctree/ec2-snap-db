@@ -37,9 +37,6 @@ check_aws_key() {
 check_aws_key AWS_ACCESS_KEY_ID AWS_ACCESS_KEY
 check_aws_key AWS_SECRET_ACCESS_KEY AWS_SECRET_KEY
 
-# Some commands will be run under sudo if we aren't running as root
-SUDO=$([ $EUID -ne 0 ] && echo sudo)
-
 real_device() {
   local DEVICE="$1"
   test -L $DEVICE && DEVICE=`readlink -f $DEVICE`
@@ -49,21 +46,14 @@ real_device() {
   echo $DEVICE
 }
 
-raid_components() {
+sysfs_components() {
   local DEVICE="$1"
   if [ ! -b $DEVICE ]; then
     die "Not a device: $DEVICE"
   fi
-  $SUDO mdadm --detail $DEVICE | awk 'NR > 1 && $NF ~ /^\/dev\// { print $NF }'
-}
-
-lvm_components() {
-  local DEVICE="$1"
-  if [ ! -b $DEVICE ]; then
-    die "Not a device: $DEVICE"
-  fi
-  local DM_DEVICE=/dev/mapper/`$SUDO dmsetup info --columns --noheading $DEVICE | cut -d: -f1`
-  $SUDO lvs -o devices --noheadings $DM_DEVICE  | sed -e 's/^[[:space:]]\+//; s/([0-9]\+)$//'
+  local SYSFS_SLAVES_DIR=$(stat -c '0x%t 0x%T' $DEVICE | xargs printf '/sys/dev/block/%d:%d/slaves')
+  [ -d $SYSFS_SLAVES_DIR ] || die "Missing sysfs directory '$SYSFS_SLAVES_DIR' for device '$DEVICE'"
+  ls $SYSFS_SLAVES_DIR | sed -e 's#^#/dev/#'
 }
 
 declare -a DEVICES=()
@@ -75,25 +65,15 @@ for MOUNT in "$@"; do
   DEVICE=`real_device $DEVICE`
   read DEVICE_MAJOR DEVICE_MINOR < <(stat -c '0x%t 0x%T' $DEVICE | xargs printf '%d %d\n')
   case $DEVICE_MAJOR in
-    9) # RAID
-      RAID_DEVICES=`raid_components $DEVICE`
-      if [ $? -ne 0 ]; then
-        exit 1
-      fi
-      for DEVICE in $RAID_DEVICES; do
-        DEVICE=`real_device $DEVICE`
-        DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
-      done
-      ;;
     202) # Xen Virtual Block Device
       DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
       ;;
-    252|253) # LVM
-      LVM_DEVICES=`lvm_components $DEVICE`
+    9|252|253) # RAID, LVM
+      SLAVE_DEVICES=`sysfs_components $DEVICE`
       if [ $? -ne 0 ]; then
         exit 1
       fi
-      for DEVICE in $LVM_DEVICES; do
+      for DEVICE in $SLAVE_DEVICES; do
         DEVICE=`real_device $DEVICE`
         DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
       done
