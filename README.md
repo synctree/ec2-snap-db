@@ -34,4 +34,16 @@ default, it will be loaded from `/etc/default/ec2-snap-db`. The config file is
 expected to set the following environment variables `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `SNAP_DB_MOUNTS`, and `SNAP_DB_OPTIONS`.
 
+The `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` variables are used to call
+`ec2-consistent-snapshot` with the appropriate access credentials. They are
+also translated into `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` for the calls to
+`ec2-describe-volumes` and `ec2-describe-tags`.
+
+The `SNAP_DB_MOUNTS` variable is an array variable containing the list of mount
+point to snapshot.
+
+The `SNAP_DB_OPTIONS` variable is an array variable containing additional
+options to be passed to `ec2-consistent-snapshot`, e.g. MySQL or Mongo-related
+parameters.
+
 A sample configuration file can be found at [`examples/ec2-snap-db.default`](examples/ec2-snap-db.default).
