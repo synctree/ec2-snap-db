@@ -8,6 +8,25 @@ CONFIG=${EC2_SNAP_DB_CONFIG:-/etc/default/ec2-snap-db}
 debug() { [ -n "$EC2_SNAP_DB_DEBUG" ] && echo "$@"; }
 die() { echo "$@" 1>&2; exit 1; }
 
+set -- $(getopt -o c: --long config: -- "$@")
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -c|--config):
+      eval "CONFIG=$2"; shift
+      ;;
+    --)
+      shift; break
+      ;;
+    -*)
+      die "Unknown option $1"
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
+
 SNAP_DB_MOUNTS=()
 if [ -r "$CONFIG" ]; then
   debug "Sourcing config: $CONFIG"
@@ -43,7 +62,7 @@ check_aws_key AWS_SECRET_ACCESS_KEY AWS_SECRET_KEY
 
 SNAP_DB_MOUNTS+=("$@")
 if [ ${#SNAP_DB_MOUNTS[@]} -eq 0 ]; then
-  die "Usage: $0 MOUNT [MOUNT...] (or configure SNAP_DB_MOUNTS in $CONFIG)"
+  die "Usage: $0 [--config CONFIG] MOUNT [MOUNT...] (or configure SNAP_DB_MOUNTS in $CONFIG)"
 fi
 
 . "$DIR/ec2-instance-env" --export
