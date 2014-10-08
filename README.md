@@ -24,7 +24,7 @@ If the command is not run as root, it will attempt to use `sudo` to execute
 When the `--config` parameter is not passed, the default configuration file at
 `/etc/default/ec2-snap-db` will be used (if it exists).
 
-To run from cron, copy the file [`examples/ec2-snap-db.cron`] to
+To run from cron, copy the file [`examples/ec2-snap-db.cron`](examples/ec2-snap-db.cron) to
 `/etc/cron.d/ec2-snap-db` and edit it to meet your needs.
 
 ## Configuration
@@ -34,4 +34,4 @@ default, it will be loaded from `/etc/default/ec2-snap-db`. The config file is
 expected to set the following environment variables `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `SNAP_DB_MOUNTS`, and `SNAP_DB_OPTIONS`.
 
-A sample configuration file can be found at [`examples/ec2-snap-db.default`].
+A sample configuration file can be found at [`examples/ec2-snap-db.default`](examples/ec2-snap-db.default).
