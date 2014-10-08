@@ -1,10 +1,18 @@
 #!/bin/bash
-#set -x
+[ -n "$EC2_SNAP_DB_DEBUG" ] && set -x
 
-DIR=$(dirname $(readlink -f "$0"))
+DIR=$(dirname $(readlink -f "$BASH_SOURCE"))
 SUDO=$([ $EUID -ne 0 ] && echo sudo)
+CONFIG=${EC2_SNAP_DB_CONFIG:-/etc/default/ec2-snap-db}
 
+debug() { [ -n "$EC2_SNAP_DB_DEBUG" ] && echo "$@"; }
 die() { echo "$@" 1>&2; exit 1; }
+
+SNAP_DB_MOUNTS=()
+if [ -r "$CONFIG" ]; then
+  debug "Sourcing config: $CONFIG"
+  . "$CONFIG"
+fi
 
 check_aws_key() {
   local FOUND_KEY= FOUND_VALUE=
@@ -33,26 +41,39 @@ check_aws_key() {
 check_aws_key AWS_ACCESS_KEY_ID AWS_ACCESS_KEY
 check_aws_key AWS_SECRET_ACCESS_KEY AWS_SECRET_KEY
 
-if [ $# -eq 0 ]; then
-  die "Usage: $0 MOUNT [MOUNT...]"
+SNAP_DB_MOUNTS+=("$@")
+if [ ${#SNAP_DB_MOUNTS[@]} -eq 0 ]; then
+  die "Usage: $0 MOUNT [MOUNT...] (or configure SNAP_DB_MOUNTS in $CONFIG)"
 fi
 
-. $DIR/ec2-instance-env --export
+. "$DIR/ec2-instance-env" --export
 
-VOLUME_MAP=$($DIR/ec2-volumes-for-mount "$@")
+VOLUME_MAP=$("$DIR/ec2-volumes-for-mount" "${SNAP_DB_MOUNTS[@]}")
 if [ $? -ne 0 ]; then
-  echo "Could not determine volumes for mounts: $@" 1>&2
+  echo "Could not determine volumes for mounts: ${SNAP_DB_MOUNTS[@]}" 1>&2
   exit 1
 fi
 
-EC2_INSTANCE_NAME=$(ec2-describe-tags --region $EC2_REGION --filter "resource-id=$EC2_INSTANCE_ID" | cut -f5-)
+EC2_INSTANCE_NAME=$(ec2-describe-tags --region "$EC2_REGION" --filter "resource-id=$EC2_INSTANCE_ID" "key=Name" | cut -f5-)
+: ${EC2_INSTANCE_NAME:=$EC2_INSTANCE_ID}
 TS=$(date "+%Y%m%d%H%M%S")
 
-ARGS="--noaction"
-ARGS+=" --region $EC2_REGION"
-ARGS+=$(awk -F: '{ print " --freeze " $1 }' <<< "$VOLUME_MAP" | uniq)
-ARGS+=$(awk -v "NAME=${EC2_INSTANCE_NAME:-$EC2_INSTANCE_ID}" \
-            -v "TS=$TS" -F: \
-            '{ MOUNT = $1 == "/" ? "/[root]" : $1; print " --description \"" NAME MOUNT "/" TS "\" " $2 }' \
-            <<< "$VOLUME_MAP")
-echo $SUDO ec2-consistent-snapshot $ARGS
+ARGS=()
+ARGS+=('--aws-access-key-id' "$AWS_ACCESS_KEY_ID")
+ARGS+=('--aws-secret-access-key' "$AWS_SECRET_ACCESS_KEY")
+ARGS+=('--region' "$EC2_REGION")
+ARGS+=("${SNAP_DB_OPTIONS[@]}")
+
+for MOUNT in $(awk -F: '{ print $1 }' <<< $"$VOLUME_MAP" | uniq); do
+  ARGS+=('--freeze' "$MOUNT")
+done
+IFS=$'\n'
+for line in $VOLUME_MAP; do
+  IFS=: read MOUNT VOLUME DEVICE <<< "$line"
+  [ "$MOUNT" = '/' ] && MOUNT='/[root]'
+  DEVICE=${DEVICE#/dev}
+  DESCRIPTION="$EC2_INSTANCE_NAME$MOUNT$DEVICE/$TS"
+  ARGS+=('--description' "$DESCRIPTION" "$VOLUME")
+done
+
+$SUDO ec2-consistent-snapshot "${ARGS[@]}"
