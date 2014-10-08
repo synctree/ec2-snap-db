@@ -32,6 +32,7 @@ while [ $# -gt 0 ]; do
 done
 
 SNAP_DB_MOUNTS=()
+SNAP_DB_OPTIONS=()
 if [ -r "$CONFIG" ]; then
   verbose "Sourcing config: $CONFIG"
   . "$CONFIG"
@@ -78,7 +79,7 @@ if [ $? -ne 0 ]; then
 fi
 
 EC2_INSTANCE_NAME=$(ec2-describe-tags --region "$EC2_REGION" --filter "resource-id=$EC2_INSTANCE_ID" "key=Name" | cut -f5-)
-: ${EC2_INSTANCE_NAME:=$EC2_INSTANCE_ID}
+: ${SNAP_DB_PREFIX:=${EC2_INSTANCE_NAME:-$EC2_INSTANCE_ID}}
 TS=$(date "+%Y%m%d%H%M%S")
 
 ARGS=()
@@ -99,7 +100,7 @@ for line in $VOLUME_MAP; do
   else
     DEVICE=${DEVICE#/dev}
   fi
-  DESCRIPTION="$EC2_INSTANCE_NAME$MOUNT$DEVICE/$TS"
+  DESCRIPTION="$SNAP_DB_PREFIX$MOUNT$DEVICE/$TS"
   ARGS+=('--description' "$DESCRIPTION" "$VOLUME")
 done
 

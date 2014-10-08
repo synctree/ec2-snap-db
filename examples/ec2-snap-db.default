@@ -3,6 +3,10 @@
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 
+# Prefix to use for snapshot descriptions; defaults to the value of the Name
+# tag for the instance or its instance id if it is untagged.
+#SNAP_DB_PREFIX=
+
 # Mounts to snapshot
 SNAP_DB_MOUNTS=(
   /data
