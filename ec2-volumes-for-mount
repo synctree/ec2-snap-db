@@ -66,21 +66,32 @@ for MOUNT in "$@"; do
   read DEVICE_MAJOR DEVICE_MINOR < <(stat -c '0x%t 0x%T' $DEVICE | xargs printf '%d %d\n')
   case $DEVICE_MAJOR in
     202) # Xen Virtual Block Device
-      DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
+      DEVICES+=("${DEVICE/xvd/sd}:$MOUNT:xvd")
       ;;
     9|252|253) # RAID, LVM
       SLAVE_DEVICES=`sysfs_components $DEVICE`
       if [ $? -ne 0 ]; then
         exit 1
       fi
+      case $DEVICE_MAJOR in
+        9)
+          DEVICE_TYPE=raid
+          ;;
+        252|253)
+          DEVICE_TYPE=lvm
+          ;;
+        *)
+          die "Unknown device type $DEVICE_MAJOR:$DEVICE_MINOR for $DEVICE at $MOUNT"
+          ;;
+      esac
       for DEVICE in $SLAVE_DEVICES; do
         DEVICE=`real_device $DEVICE`
-        DEVICES+=("${DEVICE/xvd/sd}:$MOUNT")
+        DEVICES+=("${DEVICE/xvd/sd}:$MOUNT:$DEVICE_TYPE")
+        N=$((N+1))
       done
       ;;
     *)
-      echo "Unknown device type $DEVICE_MAJOR:$DEVICE_MINOR for $DEVICE at $MOUNT"
-      exit 1
+      die "Unknown device type $DEVICE_MAJOR:$DEVICE_MINOR for $DEVICE at $MOUNT"
       ;;
   esac
 done
@@ -93,4 +104,4 @@ join -j1 -a1 -t: \
       --filter "attachment.instance-id=$EC2_INSTANCE_ID" \
       --filter "attachment.status=attached" | \
     awk '$1 == "ATTACHMENT" { print $4 ":" $2 }' | sort -t: -k1,1) | \
-awk -F: -v OFS=: '{ print $2, $3, $1 }'
+awk -F: -v OFS=: '{ print $2, $4, $1, $3 }'

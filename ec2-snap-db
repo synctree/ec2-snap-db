@@ -92,9 +92,13 @@ for MOUNT in $(awk -F: '{ print $1 }' <<< $"$VOLUME_MAP" | uniq); do
 done
 IFS=$'\n'
 for line in $VOLUME_MAP; do
-  IFS=: read MOUNT VOLUME DEVICE <<< "$line"
+  IFS=: read MOUNT VOLUME DEVICE TYPE <<< "$line"
   [ "$MOUNT" = '/' ] && MOUNT='/[root]'
-  DEVICE=${DEVICE#/dev}
+  if [ "$TYPE" = "xvd" ]; then
+    DEVICE=
+  else
+    DEVICE=${DEVICE#/dev}
+  fi
   DESCRIPTION="$EC2_INSTANCE_NAME$MOUNT$DEVICE/$TS"
   ARGS+=('--description' "$DESCRIPTION" "$VOLUME")
 done
