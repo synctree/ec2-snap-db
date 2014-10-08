@@ -1,0 +1,15 @@
+# AWS Credentials
+# Must allow ec2:CreateSnapshot, ec2:DescribeTags, and ec2:DescribeVolumes
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+
+# Mounts to snapshot
+SNAP_DB_MOUNTS=(
+  /data
+)
+
+# Options to pass along to ec2-consistent-snapshot in addition to the
+# --freeze, --description, and volume id arguments derived from SNAP_DB_MOUNTS
+SNAP_DB_OPTIONS=(
+  --noaction
+)

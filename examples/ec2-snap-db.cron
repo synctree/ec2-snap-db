@@ -1,0 +1,2 @@
+# Run ec2-snap-db at 9:00am
+0 9 * * * root /usr/local/sbin/ec2-snap-db
