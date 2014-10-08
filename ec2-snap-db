@@ -79,7 +79,9 @@ if [ $? -ne 0 ]; then
 fi
 
 EC2_INSTANCE_NAME=$(ec2-describe-tags --region "$EC2_REGION" --filter "resource-id=$EC2_INSTANCE_ID" "key=Name" | cut -f5-)
-: ${SNAP_DB_PREFIX:=${EC2_INSTANCE_NAME:-$EC2_INSTANCE_ID}}
+: ${EC2_INSTANCE_NAME:=$EC2_INSTANCE_ID}
+: ${SNAP_DB_PREFIX:=$EC2_INSTANCE_NAME}
+SNAP_DB_PREFIX=$(printf "$SNAP_DB_PREFIX" "$EC2_INSTANCE_NAME")
 TS=$(date "+%Y%m%d%H%M%S")
 
 ARGS=()

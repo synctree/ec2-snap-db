@@ -25,7 +25,7 @@ either `ec2-consistent-snapshot` or the Amazon EC2 API Tools (e.g.
 To run `ec2-snap-db` for testing purposes, execute it as follows:
 
 ```
-ec2-snap-db --config /path/to/config
+ec2-snap-db --verbose --config /path/to/config
 ```
 
 If the command is not run as root, it will attempt to use `sudo` to execute
@@ -41,20 +41,24 @@ To run from cron, copy the file [`examples/ec2-snap-db.cron`](examples/ec2-snap-
 
 The configuration file for `ec2-snap-db` is a standard shell script. By
 default, it will be loaded from `/etc/default/ec2-snap-db`. The config file is
-expected to set the following environment variables `AWS_ACCESS_KEY_ID`,
-`AWS_SECRET_ACCESS_KEY`, `SNAP_DB_MOUNTS`, and `SNAP_DB_OPTIONS`.
+expected to set the following environment variables:
 
-The `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` variables are used to call
-`ec2-consistent-snapshot` with the appropriate access credentials. They are
-also translated into `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` for the calls to
-`ec2-describe-volumes` and `ec2-describe-tags`. These credentials must allow
-the `ec2:CreateSnapshot`, `ec2:DescribeTags`, and `ec2:DescribeVolumes` actions
-to be executed for the instance on which `ec2-snap-db` is run.
+* The `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` variables are used to call
+  `ec2-consistent-snapshot` with the appropriate access credentials. They are
+  also translated into `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` for the calls to
+  `ec2-describe-volumes` and `ec2-describe-tags`. These credentials must allow
+  the `ec2:CreateSnapshot`, `ec2:DescribeTags`, and `ec2:DescribeVolumes` actions
+  to be executed for the instance on which `ec2-snap-db` is run.
 
-The `SNAP_DB_MOUNTS` variable is an array containing the list of mount point to
-snapshot.
+* The `SNAP_DB_MOUNTS` variable is an array containing the list of mount point to
+  snapshot.
 
-The `SNAP_DB_OPTIONS` variable is an array containing additional options to be
-passed to `ec2-consistent-snapshot`, e.g. MySQL or Mongo-related parameters.
+* The `SNAP_DB_OPTIONS` variable is an array containing additional options to be
+  passed to `ec2-consistent-snapshot`, e.g. MySQL or Mongo-related parameters.
+
+* The `SNAP_DB_PREFIX` variable controls the prefix used for the snapshot
+  description. The default value is the value of the instance's _Name_ tag or
+  instance id. If the value contains a single '%s', the instance name will be
+  subsituted into that position.
 
 A sample configuration file can be found at [`examples/ec2-snap-db.default`](examples/ec2-snap-db.default).
