@@ -13,8 +13,8 @@ Requires installation of `ec2-consistent-snapshot` and the
 ## Installation
 Copy the files `ec2-instance-env`, `ec2-snap-db`, and `ec2-volumes-for-mount`
 to your directory of choice. Ensure that they have executable permissions for
-the user who will be running the process. All three files must be installed in
-the same directory.
+the user who will be running the process (0755 with root ownership should be
+fine). All three files must be installed in the same directory.
 
 You may find it convenient to install these files in the same directory as
 either `ec2-consistent-snapshot` or the Amazon EC2 API Tools (e.g.
@@ -62,3 +62,7 @@ expected to set the following environment variables:
   subsituted into that position in the prefix.
 
 A sample configuration file can be found at [`examples/ec2-snap-db.default`](examples/ec2-snap-db.default).
+
+__NOTE__: Your configuration file will contain AWS secrets, so its permissions
+should not allow other users to access the file. Owner-only permissions (e.g.
+0600) are recommended.
