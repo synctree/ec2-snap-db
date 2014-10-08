@@ -47,7 +47,9 @@ expected to set the following environment variables `AWS_ACCESS_KEY_ID`,
 The `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` variables are used to call
 `ec2-consistent-snapshot` with the appropriate access credentials. They are
 also translated into `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` for the calls to
-`ec2-describe-volumes` and `ec2-describe-tags`.
+`ec2-describe-volumes` and `ec2-describe-tags`. These credentials must allow
+the `ec2:CreateSnapshot`, `ec2:DescribeTags`, and `ec2:DescribeVolumes` actions
+to be executed for the instance on which `ec2-snap-db` is run.
 
 The `SNAP_DB_MOUNTS` variable is an array containing the list of mount point to
 snapshot.
