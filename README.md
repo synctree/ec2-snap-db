@@ -50,7 +50,7 @@ expected to set the following environment variables:
   the `ec2:CreateSnapshot`, `ec2:DescribeTags`, and `ec2:DescribeVolumes` actions
   to be executed for the instance on which `ec2-snap-db` is run.
 
-* The `SNAP_DB_MOUNTS` variable is an array containing the list of mount point to
+* The `SNAP_DB_MOUNTS` variable is an array containing the list of mount points to
   snapshot.
 
 * The `SNAP_DB_OPTIONS` variable is an array containing additional options to be
@@ -59,6 +59,6 @@ expected to set the following environment variables:
 * The `SNAP_DB_PREFIX` variable controls the prefix used for the snapshot
   description. The default value is the value of the instance's _Name_ tag or
   instance id. If the value contains a single '%s', the instance name will be
-  subsituted into that position.
+  subsituted into that position in the prefix.
 
 A sample configuration file can be found at [`examples/ec2-snap-db.default`](examples/ec2-snap-db.default).
