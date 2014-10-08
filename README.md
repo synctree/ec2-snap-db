@@ -10,6 +10,16 @@ Requires installation of `ec2-consistent-snapshot` and the
 [Amazon EC2 API Tools](https://aws.amazon.com/developertools/351) in the
 `PATH`.
 
+## Installation
+Copy the files `ec2-instance-env`, `ec2-snap-db`, and `ec2-volumes-for-mount`
+to your directory of choice. Ensure that they have executable permissions for
+the user who will be running the process. All three files must be installed in
+the same directory.
+
+You may find it convenient to install these files in the same directory as
+either `ec2-consistent-snapshot` or the Amazon EC2 API Tools (e.g.
+`/opt/aws/bin`) to avoid having to update the `PATH`.
+
 ## Usage
 
 To run `ec2-snap-db` for testing purposes, execute it as follows:
