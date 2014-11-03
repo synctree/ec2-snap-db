@@ -54,7 +54,7 @@ check_aws_key() {
   if [ -n "$FOUND_KEY" ]; then
     for KEY in "$@"; do
       if [ -z "${!KEY}" ]; then
-        declare -g -x "$KEY=$FOUND_VALUE"
+        readonly "$KEY=$FOUND_VALUE"
       fi
     done
   else
