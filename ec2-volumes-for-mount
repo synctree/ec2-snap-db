@@ -37,6 +37,9 @@ check_aws_key() {
 check_aws_key AWS_ACCESS_KEY_ID AWS_ACCESS_KEY
 check_aws_key AWS_SECRET_ACCESS_KEY AWS_SECRET_KEY
 
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+export AWS_ACCESS_KEY AWS_SECRET_KEY
+
 real_device() {
   local DEVICE="$1"
   test -L $DEVICE && DEVICE=`readlink -f $DEVICE`
