@@ -26,7 +26,7 @@ check_aws_key() {
   if [ -n "$FOUND_KEY" ]; then
     for KEY in "$@"; do
       if [ -z "${!KEY}" ]; then
-        declare -g -x "$KEY=$FOUND_VALUE"
+        readonly "$KEY=$FOUND_VALUE"
       fi
     done
   else
@@ -102,6 +102,8 @@ join -j1 -a1 -t: \
   <(printf -- '%s\n' "${DEVICES[@]}" | sort -t: -k1,1) \
   <(ec2-describe-volumes --region $EC2_REGION \
       --filter "attachment.instance-id=$EC2_INSTANCE_ID" \
-      --filter "attachment.status=attached" | \
+      --filter "attachment.status=attached" \
+      --aws-access-key "$AWS_ACCESS_KEY_ID" \
+      --aws-secret-key "$AWS_SECRET_ACCESS_KEY" | \
     awk '$1 == "ATTACHMENT" { print $4 ":" $2 }' | sort -t: -k1,1) | \
 awk -F: -v OFS=: '{ print $2, $4, $1, $3 }'

@@ -38,6 +38,9 @@ if [ -r "$CONFIG" ]; then
   . "$CONFIG"
 fi
 
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+
 check_aws_key() {
   local FOUND_KEY= FOUND_VALUE=
   for KEY in "$@"; do
@@ -54,7 +57,7 @@ check_aws_key() {
   if [ -n "$FOUND_KEY" ]; then
     for KEY in "$@"; do
       if [ -z "${!KEY}" ]; then
-        declare -g -x "$KEY=$FOUND_VALUE"
+        readonly "$KEY=$FOUND_VALUE"
       fi
     done
   else
@@ -78,7 +81,7 @@ if [ $? -ne 0 ]; then
   die "Could not determine volumes for mounts: ${SNAP_DB_MOUNTS[@]}"
 fi
 
-EC2_INSTANCE_NAME=$(ec2-describe-tags --region "$EC2_REGION" --filter "resource-id=$EC2_INSTANCE_ID" "key=Name" | cut -f5-)
+EC2_INSTANCE_NAME=$(ec2-describe-tags --region "$EC2_REGION" --filter "resource-id=$EC2_INSTANCE_ID" "key=Name" --aws-access-key "$AWS_ACCESS_KEY_ID" --aws-secret-key "$AWS_SECRET_ACCESS_KEY" | cut -f5-)
 : ${EC2_INSTANCE_NAME:=$EC2_INSTANCE_ID}
 : ${SNAP_DB_PREFIX:=$EC2_INSTANCE_NAME}
 SNAP_DB_PREFIX=$(printf "$SNAP_DB_PREFIX" "$EC2_INSTANCE_NAME")
