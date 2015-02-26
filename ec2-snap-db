@@ -38,6 +38,9 @@ if [ -r "$CONFIG" ]; then
   . "$CONFIG"
 fi
 
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+
 check_aws_key() {
   local FOUND_KEY= FOUND_VALUE=
   for KEY in "$@"; do
