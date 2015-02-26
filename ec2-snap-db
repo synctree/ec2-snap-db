@@ -54,7 +54,7 @@ check_aws_key() {
   if [ -n "$FOUND_KEY" ]; then
     for KEY in "$@"; do
       if [ -z "${!KEY}" ]; then
-        declare -g -x "$KEY=$FOUND_VALUE"
+        readonly "$KEY=$FOUND_VALUE"
       fi
     done
   else
@@ -64,6 +64,9 @@ check_aws_key() {
 
 check_aws_key AWS_ACCESS_KEY_ID AWS_ACCESS_KEY
 check_aws_key AWS_SECRET_ACCESS_KEY AWS_SECRET_KEY
+
+export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+export AWS_ACCESS_KEY AWS_SECRET_KEY
 
 SNAP_DB_MOUNTS+=("$@")
 if [ ${#SNAP_DB_MOUNTS[@]} -eq 0 ]; then
